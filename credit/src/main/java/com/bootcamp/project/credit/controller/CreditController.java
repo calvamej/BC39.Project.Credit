@@ -27,28 +27,33 @@ public class CreditController {
 
         return creditService.save(col);
     }
-    @PutMapping(value = "/Update/{creditNumber}/{creditType}")
-    public Mono<CreditEntity> Update(@PathVariable("creditNumber") String document,@PathVariable("creditType") String type){
-        return creditService.update(document, type);
+    @PutMapping(value = "/Update/{creditNumber}/{currentDebt}")
+    public Mono<CreditEntity> Update(@PathVariable("creditNumber") String document,@PathVariable("currentDebt") double currentDebt){
+        return creditService.update(document, currentDebt);
     }
     @DeleteMapping  (value = "/Delete/{creditNumber}")
     public Mono<Void> Delete(@PathVariable("creditNumber") String creditNumber){
         return creditService.delete(creditNumber);
     }
-    @PutMapping(value = "/payDebt/{creditNumber}/{amount}")
-    public Mono<CreditEntity> payDebt(@PathVariable("creditNumber") String accountNumber,@PathVariable("amount") double amount){
-        return creditService.payDebt(accountNumber,amount);
+    @PutMapping(value = "/PayCredit/{creditNumber}/{amount}")
+    public Mono<CreditEntity> payCredit(@PathVariable("creditNumber") String accountNumber,@PathVariable("amount") double amount){
+        return creditService.payCredit(accountNumber,amount);
     }
-    @PutMapping(value = "/addCreditCardDebt/{creditNumber}/{amount}")
+    @PutMapping(value = "/AddCreditCardDebt/{creditNumber}/{amount}")
     public Mono<CreditEntity> addCreditCardDebt(@PathVariable("creditNumber") String accountNumber,@PathVariable("amount") double amount){
         return creditService.addCreditCardDebt(accountNumber,amount);
     }
-    @GetMapping(value = "/getCreditCardBalance/{creditNumber}")
-    public double getBalance(@PathVariable("creditNumber") String creditNumber){
-        return creditService.getBalance(creditNumber);
-    }
-    @GetMapping(value = "/getCurrentDebt/{creditNumber}")
-    public double getCurrentDebt(@PathVariable("creditNumber") String creditNumber){
+
+    @GetMapping(value = "/GetCurrentDebt/{creditNumber}")
+    public Mono<Double> getCurrentDebt(@PathVariable("creditNumber") String creditNumber){
         return creditService.getCurrentDebt(creditNumber);
+    }
+    @GetMapping(value = "/GetByClient/{clientDocumentNumber}")
+    public Mono<CreditEntity> getByClient(@PathVariable("clientDocumentNumber") String clientDocumentNumber){
+        return creditService.getByClient(clientDocumentNumber);
+    }
+    @PostMapping(value = "/RegisterCredit")
+    public Mono<CreditEntity> registerClient(@RequestBody CreditEntity col){
+        return creditService.registerCredit(col);
     }
 }

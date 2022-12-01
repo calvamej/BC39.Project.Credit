@@ -1,12 +1,17 @@
 package com.bootcamp.project.credit.service;
 
 import com.bootcamp.project.credit.entity.CreditEntity;
+import com.bootcamp.project.credit.exception.CustomInformationException;
+import com.bootcamp.project.credit.exception.CustomNotFoundException;
 import com.bootcamp.project.credit.repository.CreditRepository;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.Date;
+
 @Service
 public class CreditServiceImplementation implements CreditService{
     private static Logger Log = Logger.getLogger(CreditServiceImplementation.class);
@@ -14,91 +19,109 @@ public class CreditServiceImplementation implements CreditService{
     private CreditRepository creditRepository;
 
     @Override
-    public Mono<CreditEntity> getOne(String creditNumber) {
-        Log.info("Inicio método getOne.");
-        Mono<CreditEntity> col = creditRepository.findAll().filter(x -> x.getCreditNumber().equals(creditNumber)).next();
-        return col;
-    }
-
-    @Override
     public Flux<CreditEntity> getAll() {
-        Log.info("Inicio método getAll.");
-        Flux<CreditEntity> col = creditRepository.findAll();
-        return col;
+        return creditRepository.findAll().switchIfEmpty(Mono.error(new CustomNotFoundException("Credits not found")));
+    }
+    @Override
+    public Mono<CreditEntity> getOne(String creditNumber) {
+        return creditRepository.findAll().filter(x -> x.getCreditNumber().equals(creditNumber)).next();
     }
 
     @Override
     public Mono<CreditEntity> save(CreditEntity colEnt) {
-        Log.info("Inicio método save.");
         return creditRepository.save(colEnt);
     }
 
     @Override
-    public Mono<CreditEntity> update(String accountNumber, String type) {
-        Log.info("Inicio método update.");
-        Mono<CreditEntity> col = getOne(accountNumber);
-        CreditEntity newCol = col.block();
-        newCol.setCreditType(type);
-        return creditRepository.save(newCol);
+    public Mono<CreditEntity> update(String creditNumber, double currentDebt) {
+        return getOne(creditNumber).flatMap(c -> {
+            c.setCurrentDebt(currentDebt);
+            c.setModifyDate(new Date());
+            return creditRepository.save(c);
+        }).switchIfEmpty(Mono.error(new CustomNotFoundException("Credit not found")));
     }
 
     @Override
-    public Mono<Void> delete(String accountNumber) {
-        Log.info("Inicio método delete.");
-        Mono<CreditEntity> col = getOne(accountNumber);
-        CreditEntity newCol = col.block();
-        return creditRepository.delete(newCol);
+    public Mono<Void> delete(String creditNumber) {
+        return getOne(creditNumber)
+                .switchIfEmpty(Mono.error(new CustomNotFoundException("Credit not found")))
+                .flatMap(c -> {
+                    return creditRepository.delete(c);
+                });
     }
     @Override
-    public Mono<CreditEntity> payDebt(String creditNumber, double amount)
+    public Mono<CreditEntity> getByClient(String clientDocumentNumber)
     {
-        Log.info("Inicio método payDebt.");
-        Mono<CreditEntity> col = creditRepository.findAll().filter(x -> x.getCreditNumber().equals(creditNumber)).next();
-        CreditEntity newCol = col.block();
-        if(newCol==null)
-        {
-            return Mono.just(new CreditEntity());
-        }
-        newCol.setCurrentDebt(newCol.getCurrentDebt() - amount);
-        return creditRepository.save(newCol);
+        return creditRepository.findAll().filter(x -> x.getClientDocumentNumber().equals(clientDocumentNumber)).next();
+    }
+    @Override
+    public Mono<CreditEntity> payCredit(String creditNumber, double amount)
+    {
+        return getOne(creditNumber).flatMap(c -> {
+            c.setCurrentDebt(c.getCurrentDebt() - amount);
+            c.setModifyDate(new Date());
+            return creditRepository.save(c);
+        }).switchIfEmpty(Mono.error(new CustomNotFoundException("Credit not found")));
+    }
+    @Override
+    public Mono<Double> getCurrentDebt(String creditNumber) {
+        return getOne(creditNumber)
+                .map(x -> x.getCurrentDebt())
+                .switchIfEmpty(Mono.error(new CustomNotFoundException("Credit not found")));
     }
     @Override
     public Mono<CreditEntity> addCreditCardDebt(String creditNumber, double amount)
     {
-        Log.info("Inicio método addCreditCardDebt.");
-        Mono<CreditEntity> col = creditRepository.findAll().filter(x -> x.getCreditNumber().equals(creditNumber) && x.getCreditType().equals("TC")).next();
-        CreditEntity newCol = col.block();
-        if(newCol==null)
+        return getOne(creditNumber).filter(x -> x.getProductCode().equals("TC")).flatMap(c -> {
+            if(c.getCreditLimit() >= amount + c.getCurrentDebt())
+            {
+                c.setCurrentDebt(c.getCurrentDebt() + amount);
+            }
+            else
+            {
+                Mono.error(new CustomInformationException("Credit limit reached"));
+            }
+            c.setModifyDate(new Date());
+            return creditRepository.save(c);
+        }).switchIfEmpty(Mono.error(new CustomNotFoundException("Credit not found")));
+    }
+    @Override
+    public Mono<CreditEntity> registerCredit(CreditEntity colEnt) {
+
+        if(colEnt.getClientType().equals("P"))
         {
-            return Mono.just(new CreditEntity());
+            if(colEnt.getProductCode().equals("P"))
+            {
+                return getByClient(colEnt.getClientDocumentNumber())
+                        .filter(x -> x.getProductCode().equals("P"))
+                        .switchIfEmpty(creditRepository.save(colEnt));
+            }
+            else if(colEnt.getProductCode().equals("TC"))
+            {
+                return creditRepository.save(colEnt);
+            }
+            else
+            {
+                return Mono.error(new CustomInformationException("Personal clients can only register personal credits and credit cards"));
+            }
+
         }
-        if(newCol.getCreditLimit() >= newCol.getCurrentDebt() + amount)
+        else if (colEnt.getClientType().equals("E"))
         {
-            newCol.setCurrentDebt(newCol.getCurrentDebt() + amount);
-            newCol.setTotalDebt(newCol.getTotalDebt() + amount);
-            return creditRepository.save(newCol);
+            if(colEnt.getProductCode().equals("E") && colEnt.getProductCode().equals("TC"))
+            {
+                return creditRepository.save(colEnt);
+
+            }
+            else
+            {
+                return Mono.error(new CustomInformationException("Company clients can only register company credits and credit cards"));
+            }
         }
         else
         {
-            return Mono.just(new CreditEntity());
+            return Mono.error(new CustomInformationException("Invalid type of client"));
         }
-    }
-    @Override
-    public double getCurrentDebt(String creditNumber) {
-        Log.info("Inicio método getCurrentDebt.");
-        Mono<CreditEntity> col = getOne(creditNumber);
-        CreditEntity newCol = col.block();
-        return newCol.getCurrentDebt();
-    }
-    @Override
-    public double getBalance(String creditNumber) {
-        Log.info("Inicio método getBalance.");
-        Mono<CreditEntity> col = creditRepository.findAll().filter(x -> x.getCreditNumber().equals(creditNumber) && x.getCreditType().equals("TC")).next();
-        CreditEntity newCol = col.block();
-        if(newCol==null)
-        {
-            return 0;
-        }
-        return newCol.getCreditLimit() - newCol.getCurrentDebt();
+
     }
 }
