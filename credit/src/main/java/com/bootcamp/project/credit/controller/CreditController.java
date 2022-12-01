@@ -52,7 +52,7 @@ public class CreditController {
     public Mono<CreditEntity> getByClient(@PathVariable("clientDocumentNumber") String clientDocumentNumber){
         return creditService.getByClient(clientDocumentNumber);
     }
-    @PostMapping(value = "/RegisterCredit")
+    @PostMapping(value = "/Register")
     public Mono<CreditEntity> registerClient(@RequestBody CreditEntity col){
         return creditService.registerCredit(col);
     }
