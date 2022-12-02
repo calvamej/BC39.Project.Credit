@@ -50,9 +50,15 @@ public class CreditServiceImplementation implements CreditService{
                 });
     }
     @Override
-    public Mono<CreditEntity> getByClient(String clientDocumentNumber)
+    public Flux<CreditEntity> getByClient(String clientDocumentNumber)
     {
-        return creditRepository.findAll().filter(x -> x.getClientDocumentNumber().equals(clientDocumentNumber)).next();
+        return creditRepository.findAll().filter(x -> x.getClientDocumentNumber().equals(clientDocumentNumber));
+    }
+    @Override
+    public Flux<CreditEntity> getCreditCardsByClient(String clientDocumentNumber)
+    {
+        return creditRepository.findAll().filter(x -> x.getClientDocumentNumber().equals(clientDocumentNumber)
+                && x.getProductCode().equals("TC"));
     }
     @Override
     public Mono<CreditEntity> payCredit(String creditNumber, double amount)
@@ -86,14 +92,13 @@ public class CreditServiceImplementation implements CreditService{
         }).switchIfEmpty(Mono.error(new CustomNotFoundException("Credit not found")));
     }
     @Override
-    public Mono<CreditEntity> registerCredit(CreditEntity colEnt) {
+    public Mono<CreditEntity> registerPersonalCredit(CreditEntity colEnt) {
 
-        if(colEnt.getClientType().equals("P"))
-        {
             if(colEnt.getProductCode().equals("P"))
             {
                 return getByClient(colEnt.getClientDocumentNumber())
                         .filter(x -> x.getProductCode().equals("P"))
+                        .next()
                         .switchIfEmpty(creditRepository.save(colEnt));
             }
             else if(colEnt.getProductCode().equals("TC"))
@@ -104,10 +109,10 @@ public class CreditServiceImplementation implements CreditService{
             {
                 return Mono.error(new CustomInformationException("Personal clients can only register personal credits and credit cards"));
             }
+    }
+    @Override
+    public Mono<CreditEntity> registerCompanyCredit(CreditEntity colEnt) {
 
-        }
-        else if (colEnt.getClientType().equals("E"))
-        {
             if(colEnt.getProductCode().equals("E") && colEnt.getProductCode().equals("TC"))
             {
                 return creditRepository.save(colEnt);
@@ -118,10 +123,4 @@ public class CreditServiceImplementation implements CreditService{
                 return Mono.error(new CustomInformationException("Company clients can only register company credits and credit cards"));
             }
         }
-        else
-        {
-            return Mono.error(new CustomInformationException("Invalid type of client"));
-        }
-
-    }
 }

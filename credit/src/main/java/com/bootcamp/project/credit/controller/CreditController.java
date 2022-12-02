@@ -49,11 +49,19 @@ public class CreditController {
         return creditService.getCurrentDebt(creditNumber);
     }
     @GetMapping(value = "/GetByClient/{clientDocumentNumber}")
-    public Mono<CreditEntity> getByClient(@PathVariable("clientDocumentNumber") String clientDocumentNumber){
+    public Flux<CreditEntity> getByClient(@PathVariable("clientDocumentNumber") String clientDocumentNumber){
         return creditService.getByClient(clientDocumentNumber);
     }
-    @PostMapping(value = "/Register")
-    public Mono<CreditEntity> registerClient(@RequestBody CreditEntity col){
-        return creditService.registerCredit(col);
+    @PostMapping(value = "/RegisterPersonal")
+    public Mono<CreditEntity> registerPersonalCredit(@RequestBody CreditEntity col){
+        return creditService.registerPersonalCredit(col);
+    }
+    @GetMapping(value = "/GetCreditCardsByClient/{clientDocumentNumber}")
+    public Flux<CreditEntity> getCreditCardsByClient(@PathVariable("clientDocumentNumber") String clientDocumentNumber){
+        return creditService.getCreditCardsByClient(clientDocumentNumber);
+    }
+    @PostMapping(value = "/RegisterCompany")
+    public Mono<CreditEntity> registerCompanyCredit(@RequestBody CreditEntity col){
+        return creditService.registerCompanyCredit(col);
     }
 }
