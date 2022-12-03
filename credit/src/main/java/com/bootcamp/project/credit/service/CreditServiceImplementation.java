@@ -71,6 +71,7 @@ public class CreditServiceImplementation implements CreditService{
     }
     @Override
     public Mono<Double> getCurrentDebt(String creditNumber) {
+        //get current debt
         return getOne(creditNumber)
                 .map(x -> x.getCurrentDebt())
                 .switchIfEmpty(Mono.error(new CustomNotFoundException("Credit not found")));
