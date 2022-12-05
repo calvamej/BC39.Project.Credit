@@ -18,4 +18,5 @@ public interface CreditService {
     public Flux<CreditEntity> getCreditCardsByClient(String clientDocumentNumber);
     public Mono<CreditEntity> registerPersonalCredit(CreditEntity colEnt);
     public Mono<CreditEntity> registerCompanyCredit(CreditEntity colEnt);
+    public Mono<Double> getAverageDebt(String clientDocumentNumber);
 }

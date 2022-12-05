@@ -11,6 +11,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Date;
+import java.util.stream.Collectors;
 
 @Service
 public class CreditServiceImplementation implements CreditService{
@@ -124,4 +125,10 @@ public class CreditServiceImplementation implements CreditService{
                 return Mono.error(new CustomInformationException("Company clients can only register company credits and credit cards"));
             }
         }
+    @Override
+    public Mono<Double> getAverageDebt(String clientDocumentNumber) {
+        Flux<CreditEntity> creditFlux = creditRepository.findAll().filter(x -> x.getClientDocumentNumber().equals(clientDocumentNumber))
+                .switchIfEmpty(Mono.error(new CustomNotFoundException("The client does not have a credit")));
+        return creditFlux.collect(Collectors.averagingDouble(CreditEntity::getCurrentDebt));
+    }
 }

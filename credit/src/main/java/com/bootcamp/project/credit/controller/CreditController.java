@@ -64,4 +64,8 @@ public class CreditController {
     public Mono<CreditEntity> registerCompanyCredit(@RequestBody CreditEntity col){
         return creditService.registerCompanyCredit(col);
     }
+    @GetMapping(value = "/GetAverageDebt/{clientDocumentNumber}")
+    public Mono<Double> getAverageDebt(@PathVariable("clientDocumentNumber") String clientDocumentNumber){
+        return creditService.getAverageDebt(clientDocumentNumber);
+    }
 }
