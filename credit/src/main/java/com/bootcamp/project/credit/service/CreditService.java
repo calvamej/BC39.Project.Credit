@@ -4,6 +4,8 @@ import com.bootcamp.project.credit.entity.CreditEntity;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Date;
+
 public interface CreditService {
 
     public Mono<CreditEntity> getOne(String creditNumber);
@@ -19,4 +21,6 @@ public interface CreditService {
     public Mono<CreditEntity> registerPersonalCredit(CreditEntity colEnt);
     public Mono<CreditEntity> registerCompanyCredit(CreditEntity colEnt);
     public Mono<Double> getAverageDebt(String clientDocumentNumber);
+    public Mono<Boolean> checkDueDebtByClient(String clientDocumentNumber);
+    public Flux<CreditEntity> getByClientAndDates(String clientDocumentNumber, Date initialDate, Date finalDate);
 }

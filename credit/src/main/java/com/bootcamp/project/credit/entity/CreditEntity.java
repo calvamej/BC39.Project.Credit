@@ -21,6 +21,7 @@ public class CreditEntity {
     private double totalDebt;
     private double currentDebt;
     private double creditLimit;
+    private Date dueDate;
     private Date createDate;
     private Date modifyDate;
 

@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Date;
+
 @RestController
 @RequestMapping(value="/Credit")
 public class CreditController {
@@ -48,10 +50,6 @@ public class CreditController {
     public Mono<Double> getCurrentDebt(@PathVariable("creditNumber") String creditNumber){
         return creditService.getCurrentDebt(creditNumber);
     }
-    @GetMapping(value = "/GetByClient/{clientDocumentNumber}")
-    public Flux<CreditEntity> getByClient(@PathVariable("clientDocumentNumber") String clientDocumentNumber){
-        return creditService.getByClient(clientDocumentNumber);
-    }
     @PostMapping(value = "/RegisterPersonal")
     public Mono<CreditEntity> registerPersonalCredit(@RequestBody CreditEntity col){
         return creditService.registerPersonalCredit(col);
@@ -67,5 +65,24 @@ public class CreditController {
     @GetMapping(value = "/GetAverageDebt/{clientDocumentNumber}")
     public Mono<Double> getAverageDebt(@PathVariable("clientDocumentNumber") String clientDocumentNumber){
         return creditService.getAverageDebt(clientDocumentNumber);
+    }
+    //New Method: Valida si el cliente tiene una deuda vencida.
+    //Para ello, valida si algun credit asociado al cliente tiene una deuda (currentDebt > 0) vencida (dueDate < hoy).
+    //Si trae un resultado retorna true y si no false.
+    @GetMapping(value = "/GetAverageDebt/{clientDocumentNumber}")
+    public Mono<Boolean> checkDueDebtByClient(@PathVariable("clientDocumentNumber") String clientDocumentNumber){
+        return creditService.checkDueDebtByClient(clientDocumentNumber);
+    }
+    //New Method: Obtiene todos los créditos asociados a un cliente (clientDocumentNumber).
+    //Este método obtiene los datos para el reporte consolidado solicitado.
+    @GetMapping(value = "/GetByClient/{clientDocumentNumber}")
+    public Flux<CreditEntity> getByClient(@PathVariable("clientDocumentNumber") String clientDocumentNumber){
+        return creditService.getByClient(clientDocumentNumber);
+    }
+    //New Method: Obtiene todos los créditos asociados a un cliente (clientDocumentNumber) creados entre dos fechas.
+    //Este método obtiene los datos para el reporte consolidado solicitado.
+    @GetMapping(value = "/GetByClientAndDates/{clientDocumentNumber}/{initialDate}/{finalDate}")
+    public Flux<CreditEntity> getByClientAndDates(@PathVariable("clientDocumentNumber") String clientDocumentNumber, @PathVariable("initialDate") Date initialDate, @PathVariable("finalDate") Date finalDate){
+        return creditService.getByClientAndDates(clientDocumentNumber,initialDate,finalDate);
     }
 }

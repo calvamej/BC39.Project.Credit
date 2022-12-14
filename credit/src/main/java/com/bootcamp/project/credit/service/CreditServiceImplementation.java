@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.stream.Collectors;
 
@@ -49,11 +51,6 @@ public class CreditServiceImplementation implements CreditService{
                 .flatMap(c -> {
                     return creditRepository.delete(c);
                 });
-    }
-    @Override
-    public Flux<CreditEntity> getByClient(String clientDocumentNumber)
-    {
-        return creditRepository.findAll().filter(x -> x.getClientDocumentNumber().equals(clientDocumentNumber));
     }
     @Override
     public Flux<CreditEntity> getCreditCardsByClient(String clientDocumentNumber)
@@ -98,8 +95,8 @@ public class CreditServiceImplementation implements CreditService{
 
             if(colEnt.getProductCode().equals("P"))
             {
-                return getByClient(colEnt.getClientDocumentNumber())
-                        .filter(x -> x.getProductCode().equals("P"))
+                return creditRepository.findAll().filter(x -> x.getClientDocumentNumber().equals(colEnt.getClientDocumentNumber())
+                        && x.getProductCode().equals("P"))
                         .next()
                         .switchIfEmpty(creditRepository.save(colEnt));
             }
@@ -127,8 +124,31 @@ public class CreditServiceImplementation implements CreditService{
         }
     @Override
     public Mono<Double> getAverageDebt(String clientDocumentNumber) {
-        Flux<CreditEntity> creditFlux = creditRepository.findAll().filter(x -> x.getClientDocumentNumber().equals(clientDocumentNumber))
+        return creditRepository.findAll().filter(x -> x.getClientDocumentNumber().equals(clientDocumentNumber))
+                .collect(Collectors.averagingDouble(CreditEntity::getCurrentDebt))
                 .switchIfEmpty(Mono.error(new CustomNotFoundException("The client does not have a credit")));
-        return creditFlux.collect(Collectors.averagingDouble(CreditEntity::getCurrentDebt));
+
+    }
+    @Override
+    public Mono<Boolean> checkDueDebtByClient(String clientDocumentNumber)
+    {
+        Date today = new Date();
+        return creditRepository.findAll().filter(x -> x.getClientDocumentNumber().equals(clientDocumentNumber)
+        && x.getDueDate().before(today) && x.getCurrentDebt() >0)
+                .hasElements()
+                .switchIfEmpty(Mono.error(new CustomNotFoundException("The client does not have a credit")));
+    }
+    @Override
+    public Flux<CreditEntity> getByClient(String clientDocumentNumber)
+    {
+        return creditRepository.findAll().filter(x -> x.getClientDocumentNumber().equals(clientDocumentNumber))
+                .switchIfEmpty(Mono.error(new CustomNotFoundException("The client does not have a credit")));
+    }
+    @Override
+    public Flux<CreditEntity> getByClientAndDates(String clientDocumentNumber, Date initialDate, Date finalDate)
+    {
+        return creditRepository.findAll().filter(x -> x.getClientDocumentNumber().equals(clientDocumentNumber)
+                && x.getCreateDate().after(initialDate) && x.getCreateDate().before(finalDate))
+                .switchIfEmpty(Mono.error(new CustomNotFoundException("The client does not have a credit")));
     }
 }
