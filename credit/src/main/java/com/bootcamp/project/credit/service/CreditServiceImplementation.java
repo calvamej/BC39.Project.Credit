@@ -1,6 +1,7 @@
 package com.bootcamp.project.credit.service;
 
 import com.bootcamp.project.credit.entity.CreditEntity;
+import com.bootcamp.project.credit.entity.CreditReportEntity;
 import com.bootcamp.project.credit.exception.CustomInformationException;
 import com.bootcamp.project.credit.exception.CustomNotFoundException;
 import com.bootcamp.project.credit.repository.CreditRepository;
@@ -27,11 +28,12 @@ public class CreditServiceImplementation implements CreditService{
     }
     @Override
     public Mono<CreditEntity> getOne(String creditNumber) {
-        return creditRepository.findAll().filter(x -> x.getCreditNumber().equals(creditNumber)).next();
+        return creditRepository.findAll().filter(x -> x.getCreditNumber() != null && x.getCreditNumber().equals(creditNumber)).next();
     }
 
     @Override
     public Mono<CreditEntity> save(CreditEntity colEnt) {
+        colEnt.setCreateDate(new Date());
         return creditRepository.save(colEnt);
     }
 
@@ -53,10 +55,43 @@ public class CreditServiceImplementation implements CreditService{
                 });
     }
     @Override
-    public Flux<CreditEntity> getCreditCardsByClient(String clientDocumentNumber)
-    {
-        return creditRepository.findAll().filter(x -> x.getClientDocumentNumber().equals(clientDocumentNumber)
-                && x.getProductCode().equals("TC"));
+    public Mono<CreditEntity> registerPersonalCredit(CreditEntity colEnt) {
+
+        //PRODUCT CODE: CC = CREDIT CARD, BC = BUSINESS CREDIT, PC = PERSONAL CREDIT.
+        if(colEnt.getProductCode().equals("PC"))
+        {
+            colEnt.setCreateDate(new Date());
+            return creditRepository.findAll().filter(x -> x.getClientDocumentNumber() != null
+                            && x.getClientDocumentNumber().equals(colEnt.getClientDocumentNumber())
+                            && x.getProductCode() != null && x.getProductCode().equals("PC"))
+                    .next()
+                    .switchIfEmpty(creditRepository.save(colEnt));
+        }
+        else if(colEnt.getProductCode().equals("CC"))
+        {
+            colEnt.setCreateDate(new Date());
+            return creditRepository.findAll().filter(x -> x.getCreditNumber() != null && x.getCreditNumber().equals(colEnt.getCreditNumber())).next()
+                    .switchIfEmpty(creditRepository.save(colEnt));
+        }
+        else
+        {
+            return Mono.error(new CustomInformationException("Personal clients can only register Personal Credits and Credit Cards"));
+        }
+    }
+    @Override
+    public Mono<CreditEntity> registerCompanyCredit(CreditEntity colEnt) {
+
+        //PRODUCT CODE: CC = CREDIT CARD, BC = BUSINESS CREDIT, PC = PERSONAL CREDIT.
+        if(colEnt.getProductCode().equals("BC") || colEnt.getProductCode().equals("CC"))
+        {
+            colEnt.setCreateDate(new Date());
+            return creditRepository.findAll().filter(x -> x.getCreditNumber() != null && x.getCreditNumber().equals(colEnt.getCreditNumber())).next()
+                    .switchIfEmpty(creditRepository.save(colEnt));
+        }
+        else
+        {
+            return Mono.error(new CustomInformationException("Business clients can only register Business Credits or Credit Cards"));
+        }
     }
     @Override
     public Mono<CreditEntity> payCredit(String creditNumber, double amount)
@@ -68,6 +103,25 @@ public class CreditServiceImplementation implements CreditService{
         }).switchIfEmpty(Mono.error(new CustomNotFoundException("Credit not found")));
     }
     @Override
+    public Mono<CreditEntity> addCreditCardConsume(String creditNumber, double amount)
+    {
+        //PRODUCT CODE: CC = CREDIT CARD, BC = BUSINESS CREDIT, PC = PERSONAL CREDIT.
+        return creditRepository.findAll().filter(x -> x.getCreditNumber() != null && x.getCreditNumber().equals(creditNumber)
+                && x.getProductCode() != null && x.getProductCode().equals("CC")
+                && (x.getCreditLimit() >= amount + x.getCurrentDebt())).next().flatMap(c -> {
+                c.setCurrentDebt(c.getCurrentDebt() + amount);
+                c.setModifyDate(new Date());
+                return creditRepository.save(c);
+        }).switchIfEmpty(Mono.error(new CustomNotFoundException("Credit not found, not a Credit Card or surpassed credit limit amount.")));
+    }
+    @Override
+    public Flux<CreditEntity> getByClient(String clientDocumentNumber)
+    {
+        return creditRepository.findAll().filter(x -> x.getClientDocumentNumber() != null
+                        && x.getClientDocumentNumber().equals(clientDocumentNumber))
+                .switchIfEmpty(Mono.error(new CustomNotFoundException("The client does not have a credit")));
+    }
+    @Override
     public Mono<Double> getCurrentDebt(String creditNumber) {
         //get current debt
         return getOne(creditNumber)
@@ -75,80 +129,51 @@ public class CreditServiceImplementation implements CreditService{
                 .switchIfEmpty(Mono.error(new CustomNotFoundException("Credit not found")));
     }
     @Override
-    public Mono<CreditEntity> addCreditCardDebt(String creditNumber, double amount)
+    public Mono<Double> getCreditCardAvailableBalance(String creditNumber)
     {
-        return getOne(creditNumber).filter(x -> x.getProductCode().equals("TC")).flatMap(c -> {
-            if(c.getCreditLimit() >= amount + c.getCurrentDebt())
-            {
-                c.setCurrentDebt(c.getCurrentDebt() + amount);
-            }
-            else
-            {
-                Mono.error(new CustomInformationException("Credit limit reached"));
-            }
-            c.setModifyDate(new Date());
-            return creditRepository.save(c);
-        }).switchIfEmpty(Mono.error(new CustomNotFoundException("Credit not found")));
+        //PRODUCT CODE: CC = CREDIT CARD, BC = BUSINESS CREDIT, PC = PERSONAL CREDIT.
+        return creditRepository.findAll().filter(x -> x.getCreditNumber() != null && x.getCreditNumber().equals(creditNumber)
+                && x.getProductCode() != null && x.getProductCode().equals("CC")).next()
+                .map(x -> (x.getCreditLimit() - x.getCurrentDebt()))
+                .switchIfEmpty(Mono.error(new CustomNotFoundException("Credit not found or not a Credit Card Credit")));
     }
     @Override
-    public Mono<CreditEntity> registerPersonalCredit(CreditEntity colEnt) {
-
-            if(colEnt.getProductCode().equals("P"))
-            {
-                return creditRepository.findAll().filter(x -> x.getClientDocumentNumber().equals(colEnt.getClientDocumentNumber())
-                        && x.getProductCode().equals("P"))
-                        .next()
-                        .switchIfEmpty(creditRepository.save(colEnt));
-            }
-            else if(colEnt.getProductCode().equals("TC"))
-            {
-                return creditRepository.save(colEnt);
-            }
-            else
-            {
-                return Mono.error(new CustomInformationException("Personal clients can only register personal credits and credit cards"));
-            }
+    public Mono<Boolean> checkDueDebtByClient(String clientDocumentNumber)
+    {
+        Date today = new Date();
+        return creditRepository.findAll().filter(x -> x.getClientDocumentNumber() != null && x.getClientDocumentNumber().equals(clientDocumentNumber)
+                        && x.getDebtDueDate() != null && x.getDebtDueDate().before(today)
+                        && x.getCurrentDebt() >0)
+                .hasElements()
+                .switchIfEmpty(Mono.error(new CustomNotFoundException("The client does not have a credit")));
     }
     @Override
-    public Mono<CreditEntity> registerCompanyCredit(CreditEntity colEnt) {
-
-            if(colEnt.getProductCode().equals("E") && colEnt.getProductCode().equals("TC"))
-            {
-                return creditRepository.save(colEnt);
-
-            }
-            else
-            {
-                return Mono.error(new CustomInformationException("Company clients can only register company credits and credit cards"));
-            }
-        }
+    public Flux<CreditReportEntity> getCreditsByDates(Date initialDate, Date finalDate)
+    {
+        return creditRepository.findAll()
+                .filter(c -> c.getCreateDate() != null && c.getCreateDate().after(initialDate) && c.getCreateDate().before(finalDate))
+                .groupBy(CreditEntity::getProductCode)
+                .flatMap(a -> a
+                        .collectList().map(list ->
+                                new CreditReportEntity(a.key(), list)))
+                .switchIfEmpty(Mono.error(new CustomNotFoundException("Credits not found between the given dates.")));
+    }
+    @Override
+    public Flux<CreditReportEntity> getCreditsByClient(String clientDocumentNumber)
+    {
+        return creditRepository.findAll()
+                .filter(c -> c.getClientDocumentNumber() != null && c.getClientDocumentNumber().equals(clientDocumentNumber))
+                .groupBy(CreditEntity::getProductCode)
+                .flatMap(a -> a
+                        .collectList().map(list ->
+                                new CreditReportEntity(a.key(), list)))
+                .switchIfEmpty(Mono.error(new CustomNotFoundException("The client does not have a credit")));
+    }
     @Override
     public Mono<Double> getAverageDebt(String clientDocumentNumber) {
         return creditRepository.findAll().filter(x -> x.getClientDocumentNumber().equals(clientDocumentNumber))
                 .collect(Collectors.averagingDouble(CreditEntity::getCurrentDebt))
                 .switchIfEmpty(Mono.error(new CustomNotFoundException("The client does not have a credit")));
 
-    }
-    @Override
-    public Mono<Boolean> checkDueDebtByClient(String clientDocumentNumber)
-    {
-        Date today = new Date();
-        return creditRepository.findAll().filter(x -> x.getClientDocumentNumber().equals(clientDocumentNumber)
-        && x.getDueDate().before(today) && x.getCurrentDebt() >0)
-                .hasElements()
-                .switchIfEmpty(Mono.error(new CustomNotFoundException("The client does not have a credit")));
-    }
-    @Override
-    public Flux<CreditEntity> getByClient(String clientDocumentNumber)
-    {
-        return creditRepository.findAll().filter(x -> x.getClientDocumentNumber().equals(clientDocumentNumber))
-                .switchIfEmpty(Mono.error(new CustomNotFoundException("The client does not have a credit")));
-    }
-    @Override
-    public Flux<CreditEntity> getByClientAndDates(String clientDocumentNumber, Date initialDate, Date finalDate)
-    {
-        return creditRepository.findAll().filter(x -> x.getClientDocumentNumber().equals(clientDocumentNumber)
-                && x.getCreateDate().after(initialDate) && x.getCreateDate().before(finalDate))
-                .switchIfEmpty(Mono.error(new CustomNotFoundException("The client does not have a credit")));
     }
 }

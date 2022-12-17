@@ -1,8 +1,10 @@
 package com.bootcamp.project.credit.controller;
 
 import com.bootcamp.project.credit.entity.CreditEntity;
+import com.bootcamp.project.credit.entity.CreditReportEntity;
 import com.bootcamp.project.credit.service.CreditService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -37,52 +39,48 @@ public class CreditController {
     public Mono<Void> Delete(@PathVariable("creditNumber") String creditNumber){
         return creditService.delete(creditNumber);
     }
-    @PutMapping(value = "/PayCredit/{creditNumber}/{amount}")
-    public Mono<CreditEntity> payCredit(@PathVariable("creditNumber") String accountNumber,@PathVariable("amount") double amount){
-        return creditService.payCredit(accountNumber,amount);
-    }
-    @PutMapping(value = "/AddCreditCardDebt/{creditNumber}/{amount}")
-    public Mono<CreditEntity> addCreditCardDebt(@PathVariable("creditNumber") String accountNumber,@PathVariable("amount") double amount){
-        return creditService.addCreditCardDebt(accountNumber,amount);
-    }
-
-    @GetMapping(value = "/GetCurrentDebt/{creditNumber}")
-    public Mono<Double> getCurrentDebt(@PathVariable("creditNumber") String creditNumber){
-        return creditService.getCurrentDebt(creditNumber);
-    }
     @PostMapping(value = "/RegisterPersonal")
     public Mono<CreditEntity> registerPersonalCredit(@RequestBody CreditEntity col){
         return creditService.registerPersonalCredit(col);
     }
-    @GetMapping(value = "/GetCreditCardsByClient/{clientDocumentNumber}")
-    public Flux<CreditEntity> getCreditCardsByClient(@PathVariable("clientDocumentNumber") String clientDocumentNumber){
-        return creditService.getCreditCardsByClient(clientDocumentNumber);
-    }
-    @PostMapping(value = "/RegisterCompany")
+    @PostMapping(value = "/RegisterBusiness")
     public Mono<CreditEntity> registerCompanyCredit(@RequestBody CreditEntity col){
         return creditService.registerCompanyCredit(col);
     }
-    @GetMapping(value = "/GetAverageDebt/{clientDocumentNumber}")
-    public Mono<Double> getAverageDebt(@PathVariable("clientDocumentNumber") String clientDocumentNumber){
-        return creditService.getAverageDebt(clientDocumentNumber);
+    @PutMapping(value = "/PayCredit/{creditNumber}/{amount}")
+    public Mono<CreditEntity> payCredit(@PathVariable("creditNumber") String accountNumber,@PathVariable("amount") double amount){
+        return creditService.payCredit(accountNumber,amount);
     }
-    //New Method: Valida si el cliente tiene una deuda vencida.
-    //Para ello, valida si algun credit asociado al cliente tiene una deuda (currentDebt > 0) vencida (dueDate < hoy).
-    //Si trae un resultado retorna true y si no false.
-    @GetMapping(value = "/GetAverageDebt/{clientDocumentNumber}")
-    public Mono<Boolean> checkDueDebtByClient(@PathVariable("clientDocumentNumber") String clientDocumentNumber){
-        return creditService.checkDueDebtByClient(clientDocumentNumber);
+    @PutMapping(value = "/AddCreditCardConsume/{creditNumber}/{amount}")
+    public Mono<CreditEntity> addCreditCardConsume(@PathVariable("creditNumber") String accountNumber,@PathVariable("amount") double amount){
+        return creditService.addCreditCardConsume(accountNumber,amount);
     }
-    //New Method: Obtiene todos los créditos asociados a un cliente (clientDocumentNumber).
-    //Este método obtiene los datos para el reporte consolidado solicitado.
     @GetMapping(value = "/GetByClient/{clientDocumentNumber}")
     public Flux<CreditEntity> getByClient(@PathVariable("clientDocumentNumber") String clientDocumentNumber){
         return creditService.getByClient(clientDocumentNumber);
     }
-    //New Method: Obtiene todos los créditos asociados a un cliente (clientDocumentNumber) creados entre dos fechas.
-    //Este método obtiene los datos para el reporte consolidado solicitado.
-    @GetMapping(value = "/GetByClientAndDates/{clientDocumentNumber}/{initialDate}/{finalDate}")
-    public Flux<CreditEntity> getByClientAndDates(@PathVariable("clientDocumentNumber") String clientDocumentNumber, @PathVariable("initialDate") Date initialDate, @PathVariable("finalDate") Date finalDate){
-        return creditService.getByClientAndDates(clientDocumentNumber,initialDate,finalDate);
+    @GetMapping(value = "/GetCurrentDebt/{creditNumber}")
+    public Mono<Double> getCurrentDebt(@PathVariable("creditNumber") String creditNumber){
+        return creditService.getCurrentDebt(creditNumber);
+    }
+    @GetMapping(value = "/GetCreditCardAvailableBalance/{creditNumber}")
+    public Mono<Double> getCreditCardAvailableBalance(@PathVariable("creditNumber") String creditNumber){
+        return creditService.getCreditCardAvailableBalance(creditNumber);
+    }
+    @GetMapping(value = "/CheckDueDebtByClient/{clientDocumentNumber}")
+    public Mono<Boolean> checkDueDebtByClient(@PathVariable("clientDocumentNumber") String clientDocumentNumber){
+        return creditService.checkDueDebtByClient(clientDocumentNumber);
+    }
+    @GetMapping(value = "/GetCreditsByDates/{initialDate}/{finalDate}")
+    public Flux<CreditReportEntity> getCreditsByDates(@PathVariable("initialDate") @DateTimeFormat(pattern = "dd-MM-yyyy") Date initialDate, @PathVariable("finalDate") @DateTimeFormat(pattern = "dd-MM-yyyy") Date finalDate){
+        return creditService.getCreditsByDates(initialDate,finalDate);
+    }
+    @GetMapping(value = "/GetCreditsByClient/{clientDocumentNumber}")
+    public Flux<CreditReportEntity> getCreditsByClient(@PathVariable("clientDocumentNumber") String clientDocumentNumber){
+        return creditService.getCreditsByClient(clientDocumentNumber);
+    }
+    @GetMapping(value = "/GetAverageDebt/{clientDocumentNumber}")
+    public Mono<Double> getAverageDebt(@PathVariable("clientDocumentNumber") String clientDocumentNumber){
+        return creditService.getAverageDebt(clientDocumentNumber);
     }
 }

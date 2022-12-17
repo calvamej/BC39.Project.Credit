@@ -31,7 +31,7 @@ class CreditServiceImplementationTest {
     void checkDueDebtByClient() {
         CreditEntity creditEntity = new CreditEntity();
         creditEntity.setClientDocumentNumber("17593382");
-        creditEntity.setDueDate(new Date());
+        creditEntity.setDebtDueDate(new Date());
         creditEntity.setCurrentDebt(12.0);
         List<CreditEntity> creditEntityList = new ArrayList<>();
         creditEntityList.add(creditEntity);
@@ -49,17 +49,6 @@ class CreditServiceImplementationTest {
         creditEntityList.add(creditEntity);
         Mockito.when(creditRepository.findAll()).thenReturn(Flux.fromIterable(creditEntityList));
         Flux<CreditEntity> result = creditServiceImplementation.getByClient("17593382");
-        Assertions.assertNotNull(result);
-    }
-
-    @Test
-    void getByClientAndDates() {
-        CreditEntity creditEntity = new CreditEntity();
-        creditEntity.setClientDocumentNumber("17593382");
-        List<CreditEntity> creditEntityList = new ArrayList<>();
-        creditEntityList.add(creditEntity);
-        Mockito.when(creditRepository.findAll()).thenReturn(Flux.fromIterable(creditEntityList));
-        Flux<CreditEntity> result = creditServiceImplementation.getByClientAndDates("17593382", new Date(), new Date());
         Assertions.assertNotNull(result);
     }
 }

@@ -1,5 +1,6 @@
 package com.bootcamp.project.credit.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,19 +15,21 @@ import java.util.Date;
 @Document(collection = "Credit")
 public class CreditEntity {
     @Id
+    private String id;
     private String creditNumber;
-    private String idProduct;
+    //PRODUCT CODE: CC = CREDIT CARD, BC = BUSINESS CREDIT, PC = PERSONAL CREDIT.
+    private String productCode;
     private String clientDocumentNumber;
+    private String clientType;
+    private String clientSubType;
+    private String creditCardNumber;
     private String accountNumber;
-    private double totalDebt;
     private double currentDebt;
     private double creditLimit;
-    private Date dueDate;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
+    private Date debtDueDate;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     private Date createDate;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
     private Date modifyDate;
-
-    /*Temp */
-    private String clientType;
-    private String productCode;
-    /*Temp */
 }
