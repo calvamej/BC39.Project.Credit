@@ -1,8 +1,8 @@
 package com.bootcamp.project.credit.service;
 
-import com.bootcamp.project.credit.entity.CreditDailyReportEntity;
+import com.bootcamp.project.credit.entity.report.CreditDailyReportEntity;
 import com.bootcamp.project.credit.entity.CreditEntity;
-import com.bootcamp.project.credit.entity.CreditReportEntity;
+import com.bootcamp.project.credit.entity.report.CreditReportEntity;
 import com.bootcamp.project.credit.exception.CustomInformationException;
 import com.bootcamp.project.credit.exception.CustomNotFoundException;
 import com.bootcamp.project.credit.repository.CreditRepository;
@@ -12,8 +12,6 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.Date;
 import java.util.stream.Collectors;
 

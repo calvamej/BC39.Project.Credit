@@ -1,8 +1,8 @@
 package com.bootcamp.project.credit.service;
 
-import com.bootcamp.project.credit.entity.CreditDailyReportEntity;
+import com.bootcamp.project.credit.entity.report.CreditDailyReportEntity;
 import com.bootcamp.project.credit.entity.CreditEntity;
-import com.bootcamp.project.credit.entity.CreditReportEntity;
+import com.bootcamp.project.credit.entity.report.CreditReportEntity;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 

@@ -1,8 +1,8 @@
 package com.bootcamp.project.credit.controller;
 
-import com.bootcamp.project.credit.entity.CreditDailyReportEntity;
+import com.bootcamp.project.credit.entity.report.CreditDailyReportEntity;
 import com.bootcamp.project.credit.entity.CreditEntity;
-import com.bootcamp.project.credit.entity.CreditReportEntity;
+import com.bootcamp.project.credit.entity.report.CreditReportEntity;
 import com.bootcamp.project.credit.service.CreditService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;

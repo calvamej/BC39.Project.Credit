@@ -1,5 +1,6 @@
-package com.bootcamp.project.credit.entity;
+package com.bootcamp.project.credit.entity.report;
 
+import com.bootcamp.project.credit.entity.CreditEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

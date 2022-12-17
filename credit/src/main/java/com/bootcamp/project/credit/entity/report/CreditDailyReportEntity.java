@@ -1,5 +1,6 @@
-package com.bootcamp.project.credit.entity;
+package com.bootcamp.project.credit.entity.report;
 
+import com.bootcamp.project.credit.entity.CreditEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
