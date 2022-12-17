@@ -1,5 +1,6 @@
 package com.bootcamp.project.credit.service;
 
+import com.bootcamp.project.credit.entity.CreditDailyReportEntity;
 import com.bootcamp.project.credit.entity.CreditEntity;
 import com.bootcamp.project.credit.entity.CreditReportEntity;
 import com.bootcamp.project.credit.exception.CustomInformationException;
@@ -170,10 +171,14 @@ public class CreditServiceImplementation implements CreditService{
                 .switchIfEmpty(Mono.error(new CustomNotFoundException("The client does not have a credit")));
     }
     @Override
-    public Mono<Double> getAverageDebt(String clientDocumentNumber) {
-        return creditRepository.findAll().filter(x -> x.getClientDocumentNumber().equals(clientDocumentNumber))
-                .collect(Collectors.averagingDouble(CreditEntity::getCurrentDebt))
-                .switchIfEmpty(Mono.error(new CustomNotFoundException("The client does not have a credit")));
+    public Flux<CreditDailyReportEntity> getAverageDebtByClient(String clientDocumentNumber) {
 
+        return  creditRepository.findAll().filter(x -> x.getClientDocumentNumber() != null &&
+                        x.getClientDocumentNumber().equals(clientDocumentNumber))
+                .groupBy(CreditEntity::getClientDocumentNumber)
+                .flatMap(a -> a
+                        .collectList().map(list ->
+                                new CreditDailyReportEntity(a.key(), list.stream().count(),list.stream().collect(Collectors.averagingDouble(CreditEntity::getCurrentDebt)), new Date(), list)))
+                .switchIfEmpty(Mono.error(new CustomNotFoundException("The client does not have a credit")));
     }
 }

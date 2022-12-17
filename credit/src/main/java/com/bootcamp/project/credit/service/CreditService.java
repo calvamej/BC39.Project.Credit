@@ -1,5 +1,6 @@
 package com.bootcamp.project.credit.service;
 
+import com.bootcamp.project.credit.entity.CreditDailyReportEntity;
 import com.bootcamp.project.credit.entity.CreditEntity;
 import com.bootcamp.project.credit.entity.CreditReportEntity;
 import reactor.core.publisher.Flux;
@@ -24,5 +25,5 @@ public interface CreditService {
     public Mono<Boolean> checkDueDebtByClient(String clientDocumentNumber);
     public Flux<CreditReportEntity> getCreditsByDates(Date initialDate, Date finalDate);
     public Flux<CreditReportEntity> getCreditsByClient(String clientDocumentNumber);
-    public Mono<Double> getAverageDebt(String clientDocumentNumber);
+    Flux<CreditDailyReportEntity> getAverageDebtByClient(String clientDocumentNumber);
 }

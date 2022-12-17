@@ -1,5 +1,6 @@
 package com.bootcamp.project.credit.controller;
 
+import com.bootcamp.project.credit.entity.CreditDailyReportEntity;
 import com.bootcamp.project.credit.entity.CreditEntity;
 import com.bootcamp.project.credit.entity.CreditReportEntity;
 import com.bootcamp.project.credit.service.CreditService;
@@ -79,8 +80,8 @@ public class CreditController {
     public Flux<CreditReportEntity> getCreditsByClient(@PathVariable("clientDocumentNumber") String clientDocumentNumber){
         return creditService.getCreditsByClient(clientDocumentNumber);
     }
-    @GetMapping(value = "/GetAverageDebt/{clientDocumentNumber}")
-    public Mono<Double> getAverageDebt(@PathVariable("clientDocumentNumber") String clientDocumentNumber){
-        return creditService.getAverageDebt(clientDocumentNumber);
+    @GetMapping(value = "/GetAverageDebtByClient/{clientDocumentNumber}")
+    public Flux<CreditDailyReportEntity> getAverageDebtByClient(@PathVariable("clientDocumentNumber") String clientDocumentNumber){
+        return creditService.getAverageDebtByClient(clientDocumentNumber);
     }
 }
