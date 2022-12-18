@@ -121,6 +121,13 @@ public class CreditServiceImplementation implements CreditService{
                 .switchIfEmpty(Mono.error(new CustomNotFoundException("The client does not have a credit")));
     }
     @Override
+    public Flux<CreditEntity> getCreditCardsByClient(String clientDocumentNumber)
+    {
+        return creditRepository.findAll().filter(x -> x.getClientDocumentNumber() != null
+                        && x.getClientDocumentNumber().equals(clientDocumentNumber) && x.getProductCode() != null & x.getProductCode().equals("CC"))
+                .switchIfEmpty(Mono.error(new CustomNotFoundException("The client does not have a credit cards")));
+    }
+    @Override
     public Mono<Double> getCurrentDebt(String creditNumber) {
         //get current debt
         return getOne(creditNumber)

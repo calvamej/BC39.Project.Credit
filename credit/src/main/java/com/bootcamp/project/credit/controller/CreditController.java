@@ -60,6 +60,10 @@ public class CreditController {
     public Flux<CreditEntity> getByClient(@PathVariable("clientDocumentNumber") String clientDocumentNumber){
         return creditService.getByClient(clientDocumentNumber);
     }
+    @GetMapping(value = "/GetCreditCardsByClient/{clientDocumentNumber}")
+    public Flux<CreditEntity> getCreditCardsByClient(@PathVariable("clientDocumentNumber") String clientDocumentNumber){
+        return creditService.getCreditCardsByClient(clientDocumentNumber);
+    }
     @GetMapping(value = "/GetCurrentDebt/{creditNumber}")
     public Mono<Double> getCurrentDebt(@PathVariable("creditNumber") String creditNumber){
         return creditService.getCurrentDebt(creditNumber);

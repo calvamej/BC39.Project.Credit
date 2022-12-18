@@ -20,6 +20,7 @@ public interface CreditService {
     public Mono<CreditEntity> payCredit(String creditNumber, double amount);
     public Mono<CreditEntity> addCreditCardConsume(String creditNumber, double amount);
     public Flux<CreditEntity> getByClient(String clientDocumentNumber);
+    public Flux<CreditEntity> getCreditCardsByClient(String clientDocumentNumber);
     public Mono<Double> getCurrentDebt(String creditNumber);
     public Mono<Double> getCreditCardAvailableBalance(String creditNumber);
     public Mono<Boolean> checkDueDebtByClient(String clientDocumentNumber);
