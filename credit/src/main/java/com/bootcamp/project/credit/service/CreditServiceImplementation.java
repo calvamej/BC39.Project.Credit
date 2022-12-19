@@ -57,6 +57,7 @@ public class CreditServiceImplementation implements CreditService{
     public Mono<CreditEntity> registerPersonalCredit(CreditEntity colEnt) {
 
         //PRODUCT CODE: CC = CREDIT CARD, BC = BUSINESS CREDIT, PC = PERSONAL CREDIT.
+        colEnt.setClientType("P");
         if(colEnt.getProductCode().equals("PC"))
         {
             colEnt.setCreateDate(new Date());
@@ -83,6 +84,7 @@ public class CreditServiceImplementation implements CreditService{
         //PRODUCT CODE: CC = CREDIT CARD, BC = BUSINESS CREDIT, PC = PERSONAL CREDIT.
         if(colEnt.getProductCode().equals("BC") || colEnt.getProductCode().equals("CC"))
         {
+            colEnt.setClientType("B");
             colEnt.setCreateDate(new Date());
             return creditRepository.findAll().filter(x -> x.getCreditNumber() != null && x.getCreditNumber().equals(colEnt.getCreditNumber())).next()
                     .switchIfEmpty(creditRepository.save(colEnt));
