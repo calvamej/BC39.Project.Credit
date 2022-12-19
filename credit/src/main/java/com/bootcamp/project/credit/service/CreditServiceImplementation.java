@@ -69,8 +69,13 @@ public class CreditServiceImplementation implements CreditService{
         }
         else if(colEnt.getProductCode().equals("CC"))
         {
+            if(colEnt.getCreditCardNumber() == null || colEnt.getCreditCardNumber().equals(""))
+            {
+                return Mono.error(new CustomInformationException("Please insert a valid credit card number."));
+            }
             colEnt.setCreateDate(new Date());
-            return creditRepository.findAll().filter(x -> x.getCreditNumber() != null && x.getCreditNumber().equals(colEnt.getCreditNumber())).next()
+            return creditRepository.findAll().filter(x -> (x.getCreditNumber() != null && x.getCreditNumber().equals(colEnt.getCreditNumber()))
+                    || (x.getCreditCardNumber() != null && x.getCreditCardNumber().equals(colEnt.getCreditCardNumber()))).next()
                     .switchIfEmpty(creditRepository.save(colEnt));
         }
         else
@@ -82,11 +87,22 @@ public class CreditServiceImplementation implements CreditService{
     public Mono<CreditEntity> registerCompanyCredit(CreditEntity colEnt) {
 
         //PRODUCT CODE: CC = CREDIT CARD, BC = BUSINESS CREDIT, PC = PERSONAL CREDIT.
-        if(colEnt.getProductCode().equals("BC") || colEnt.getProductCode().equals("CC"))
+        colEnt.setClientType("B");
+        if(colEnt.getProductCode().equals("BC"))
         {
-            colEnt.setClientType("B");
             colEnt.setCreateDate(new Date());
             return creditRepository.findAll().filter(x -> x.getCreditNumber() != null && x.getCreditNumber().equals(colEnt.getCreditNumber())).next()
+                    .switchIfEmpty(creditRepository.save(colEnt));
+        }
+        else if(colEnt.getProductCode().equals("CC"))
+        {
+            if(colEnt.getCreditCardNumber() == null || colEnt.getCreditCardNumber().equals(""))
+            {
+                return Mono.error(new CustomInformationException("Please insert a valid credit card number."));
+            }
+            colEnt.setCreateDate(new Date());
+            return creditRepository.findAll().filter(x -> (x.getCreditNumber() != null && x.getCreditNumber().equals(colEnt.getCreditNumber()))
+                            || (x.getCreditCardNumber() != null && x.getCreditCardNumber().equals(colEnt.getCreditCardNumber()))).next()
                     .switchIfEmpty(creditRepository.save(colEnt));
         }
         else
@@ -104,16 +120,16 @@ public class CreditServiceImplementation implements CreditService{
         }).switchIfEmpty(Mono.error(new CustomNotFoundException("Credit not found")));
     }
     @Override
-    public Mono<CreditEntity> addCreditCardConsume(String creditNumber, double amount)
+    public Mono<CreditEntity> addCreditCardConsume(String creditCardNumber, double amount)
     {
         //PRODUCT CODE: CC = CREDIT CARD, BC = BUSINESS CREDIT, PC = PERSONAL CREDIT.
-        return creditRepository.findAll().filter(x -> x.getCreditNumber() != null && x.getCreditNumber().equals(creditNumber)
+        return creditRepository.findAll().filter(x -> x.getCreditCardNumber() != null && x.getCreditCardNumber().equals(creditCardNumber)
                 && x.getProductCode() != null && x.getProductCode().equals("CC")
                 && (x.getCreditLimit() >= amount + x.getCurrentDebt())).next().flatMap(c -> {
                 c.setCurrentDebt(c.getCurrentDebt() + amount);
                 c.setModifyDate(new Date());
                 return creditRepository.save(c);
-        }).switchIfEmpty(Mono.error(new CustomNotFoundException("Credit not found, not a Credit Card or surpassed credit limit amount.")));
+        }).switchIfEmpty(Mono.error(new CustomNotFoundException("Credit Card not linked to a credit or surpassed credit limit amount.")));
     }
     @Override
     public Flux<CreditEntity> getByClient(String clientDocumentNumber)

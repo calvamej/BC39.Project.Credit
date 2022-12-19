@@ -52,9 +52,9 @@ public class CreditController {
     public Mono<CreditEntity> payCredit(@PathVariable("creditNumber") String accountNumber,@PathVariable("amount") double amount){
         return creditService.payCredit(accountNumber,amount);
     }
-    @PutMapping(value = "/AddCreditCardConsume/{creditNumber}/{amount}")
-    public Mono<CreditEntity> addCreditCardConsume(@PathVariable("creditNumber") String accountNumber,@PathVariable("amount") double amount){
-        return creditService.addCreditCardConsume(accountNumber,amount);
+    @PutMapping(value = "/AddCreditCardConsume/{creditCardNumber}/{amount}")
+    public Mono<CreditEntity> addCreditCardConsume(@PathVariable("creditCardNumber") String creditCardNumber,@PathVariable("amount") double amount){
+        return creditService.addCreditCardConsume(creditCardNumber,amount);
     }
     @GetMapping(value = "/GetByClient/{clientDocumentNumber}")
     public Flux<CreditEntity> getByClient(@PathVariable("clientDocumentNumber") String clientDocumentNumber){

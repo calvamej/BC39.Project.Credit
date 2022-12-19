@@ -18,7 +18,7 @@ public interface CreditService {
     public Mono<CreditEntity> registerPersonalCredit(CreditEntity colEnt);
     public Mono<CreditEntity> registerCompanyCredit(CreditEntity colEnt);
     public Mono<CreditEntity> payCredit(String creditNumber, double amount);
-    public Mono<CreditEntity> addCreditCardConsume(String creditNumber, double amount);
+    public Mono<CreditEntity> addCreditCardConsume(String creditCardNumber, double amount);
     public Flux<CreditEntity> getByClient(String clientDocumentNumber);
     public Flux<CreditEntity> getCreditCardsByClient(String clientDocumentNumber);
     public Mono<Double> getCurrentDebt(String creditNumber);
