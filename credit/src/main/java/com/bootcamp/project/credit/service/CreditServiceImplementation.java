@@ -1,5 +1,6 @@
 package com.bootcamp.project.credit.service;
 
+import com.bootcamp.project.credit.entity.operation.OperationDTO;
 import com.bootcamp.project.credit.entity.report.CreditDailyReportEntity;
 import com.bootcamp.project.credit.entity.CreditEntity;
 import com.bootcamp.project.credit.entity.report.CreditReportEntity;
@@ -8,6 +9,7 @@ import com.bootcamp.project.credit.exception.CustomNotFoundException;
 import com.bootcamp.project.credit.repository.CreditRepository;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -18,6 +20,10 @@ import java.util.stream.Collectors;
 @Service
 public class CreditServiceImplementation implements CreditService{
     private static Logger Log = Logger.getLogger(CreditServiceImplementation.class);
+    public static final String topic = "mytopicOperation";
+
+    @Autowired
+    private KafkaTemplate<String, OperationDTO> kafkaTemp;
     @Autowired
     private CreditRepository creditRepository;
 
@@ -116,6 +122,7 @@ public class CreditServiceImplementation implements CreditService{
         return getOne(creditNumber).flatMap(c -> {
             c.setCurrentDebt(c.getCurrentDebt() - amount);
             c.setModifyDate(new Date());
+            publishToTopic(c.getCreditNumber(), "CREDIT PAYMENT", amount, c.getClientDocumentNumber(), c.getProductCode(), c.getCreditCardNumber());
             return creditRepository.save(c);
         }).switchIfEmpty(Mono.error(new CustomNotFoundException("Credit not found")));
     }
@@ -128,6 +135,7 @@ public class CreditServiceImplementation implements CreditService{
                 && (x.getCreditLimit() >= amount + x.getCurrentDebt())).next().flatMap(c -> {
                 c.setCurrentDebt(c.getCurrentDebt() + amount);
                 c.setModifyDate(new Date());
+                publishToTopic(c.getCreditNumber(), "CREDIT CARD CONSUME", amount, c.getClientDocumentNumber(), c.getProductCode(), c.getCreditCardNumber());
                 return creditRepository.save(c);
         }).switchIfEmpty(Mono.error(new CustomNotFoundException("Credit Card not linked to a credit or surpassed credit limit amount.")));
     }
@@ -203,5 +211,16 @@ public class CreditServiceImplementation implements CreditService{
                         .collectList().map(list ->
                                 new CreditDailyReportEntity(a.key(), list.stream().count(),list.stream().collect(Collectors.averagingDouble(CreditEntity::getCurrentDebt)), new Date(), list)))
                 .switchIfEmpty(Mono.error(new CustomNotFoundException("The client does not have a credit")));
+    }
+    @Override
+    public void publishToTopic(String creditNumber, String operationType, Double amount, String clientDocumentNumber, String productCode, String creditCardNumber) {
+        OperationDTO operationDTO = new OperationDTO();
+        operationDTO.setCreditNumber(creditNumber);
+        operationDTO.setOperationType(operationType);
+        operationDTO.setAmount(amount);
+        operationDTO.setClientDocumentNumber(clientDocumentNumber);
+        operationDTO.setProductCode(productCode);
+        operationDTO.setCreditCardNumber(creditCardNumber);
+        this.kafkaTemp.send(topic, operationDTO);
     }
 }

@@ -27,4 +27,5 @@ public interface CreditService {
     public Flux<CreditReportEntity> getCreditsByDates(Date initialDate, Date finalDate);
     public Flux<CreditReportEntity> getCreditsByClient(String clientDocumentNumber);
     Flux<CreditDailyReportEntity> getAverageDebtByClient(String clientDocumentNumber);
+    public void publishToTopic(String creditNumber, String operationType, Double amount, String clientDocumentNumber, String productCode, String creditCardNumber);
 }
